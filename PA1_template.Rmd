@@ -1,0 +1,75 @@
+---
+title: "PA1_template"
+author: "Pierre Deslee"
+date: "3 mai 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+##Reading Data
+```{r Read data}
+dat<-read.csv("activity.csv")
+library(ggplot2)
+```
+
+##Total number of steps taken per day?
+```{r total steps by day}
+SumbyDay<-tapply(dat$steps, dat$date, sum, na.rm =TRUE)
+hist(SumbyDay, breaks = 61, xlab = "Total number of steps taken each day", main ="")
+moy<-mean(SumbyDay)
+moy
+mediane<-median(SumbyDay)
+mediane
+```
+
+##Average daily activity?
+```{r mean step by interbval}
+averages <- aggregate(steps ~ interval, data = dat, mean, na.rm = TRUE)
+
+ggplot(averages, aes(interval, steps)) + geom_line() + 
+  xlab("5-minute interval") + ylab("Number of steps")
+```
+
+##Number of missing values?
+```{r missing values}
+missing<-sum(is.na(dat$steps))
+missing
+```
+
+##Imputing missing values?
+```{r inputing missing values}
+full<-dat
+for (i in 1:nrow(full)){
+  if(is.na(full$steps[i])){
+    full$steps[i]<-averages[(i-1) %% nrow(averages) +1,"steps"]
+  }
+}
+```
+
+Total number of steps taken each day with missing values
+```{r number of steps taken each day with missing values}
+SumbyDay2<-tapply(full$steps, full$date, sum, na.rm =TRUE)
+hist(SumbyDay2, breaks = 61,xlab = "Total number of steps taken each day", main ="")
+moy2<-mean(SumbyDay2)
+moy2
+mediane2<-median(SumbyDay2)
+mediane2
+```
+
+##Differences in activity patterns between weekdays and weekends?
+```{r weekday and weekend}
+library(chron)
+full$week<-is.weekend(full$date)
+full$weekday[full$week==FALSE]<-"weekday"
+full$weekday[full$week==TRUE]<-"weekend"
+
+averages <- aggregate(steps ~ interval + weekday, data = full, mean, na.rm = TRUE)
+ggplot(averages, aes(interval, steps)) + geom_line() +  facet_grid(.~ weekday) +
+  xlab("5-minute interval") + ylab("Number of steps")
+```
+
+
